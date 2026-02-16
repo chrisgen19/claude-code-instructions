@@ -9,14 +9,17 @@ claude-code-instructions/
 ├── CLAUDE.md                        # Global instructions & coding preferences
 ├── README.md                        # Setup guide (this file)
 └── skills/
-    └── explain-code/
-        └── SKILL.md                 # Custom skill: explain code with diagrams
+    ├── explain-code/
+    │   └── SKILL.md                 # Custom skill: explain code with diagrams
+    └── wp-backup/
+        └── SKILL.md                 # Custom skill: WordPress site backup
 ```
 
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | Coding standards, tech stack preferences, git conventions, communication style, and workflow rules that apply to every project |
 | `skills/explain-code/SKILL.md` | Custom `/explain-code` slash command that explains code using analogies, ASCII diagrams, and step-by-step walkthroughs |
+| `skills/wp-backup/SKILL.md` | Custom `/wp-backup` slash command that backs up a WordPress site (database export + file zip) |
 
 ---
 
@@ -91,7 +94,7 @@ claude
 ```
 
 - Your global preferences from `CLAUDE.md` should be active automatically
-- Type `/explain-code` to verify the skill is available
+- Type `/explain-code` or `/wp-backup` to verify the skills are available
 
 ---
 
@@ -105,7 +108,9 @@ After setup, your `~/.claude/` directory should look like this:
 ├── settings.json             # Global settings (permissions, hooks, env vars)
 ├── keybindings.json          # Custom keyboard shortcuts
 ├── skills/                   # Custom slash commands (available everywhere)
-│   └── explain-code/
+│   ├── explain-code/
+│   │   └── SKILL.md
+│   └── wp-backup/
 │       └── SKILL.md
 └── projects/                 # Auto-generated per-project memory
     └── <project-hash>/
@@ -159,6 +164,34 @@ Explains code using analogies, diagrams, and step-by-step walkthroughs.
 > /explain-code  (then ask about a specific function)
 > How does the authentication flow work?  (auto-invoked based on description)
 ```
+
+### Included Skill: `/wp-backup`
+
+Backs up a WordPress site by exporting the database and zipping the files into a timestamped archive.
+
+**When it activates:** When you say "backup", "back up", "export", or need to migrate/archive a WordPress site.
+
+**What it does:**
+1. Locates `wp-config.php` by traversing up from the current directory (works from any subdirectory like `themes/`, `plugins/`, etc.)
+2. Extracts DB credentials from `wp-config.php`
+3. Creates a timestamped backup folder at `<wp-root>/backups/backup_YYYY-MM-DD_HH-MM-SS/`
+4. Exports the database via `mysqldump` (falls back to `wp db export` if available)
+5. Zips WordPress files (excluding `node_modules`, `.git`, `cache`, etc.)
+6. Provides a summary with file sizes and backup location
+
+**Example usage:**
+
+```
+> /wp-backup
+> backup my wordpress site
+> I need to export this site before migrating
+```
+
+**Notes:**
+- Database passwords are never displayed in output
+- Works from any subdirectory within a WordPress installation
+- Warns if the database is large (>500MB)
+- Uses `--single-transaction` to avoid locking tables on live servers
 
 ### Creating Your Own Skills
 
